@@ -69,18 +69,15 @@ move_simultaneously.from_(1).to(5)(foo, bar)()
 curriability
 ----
 
-With churry, you can
+With immutable churry, you can
 
 ```python
-move_to_1_5 = move_simultaneously.from_(1).to(5).freeze()
+move_to_1_5 = move_simultaneously.from_(1).to(5)
 
 move_to_1_5(foo, bar)()
 move_to_1_5(bar, foo)()
 move_to_1_5(spam, ham)()
 ```
-
-Note that `freeze()` will clear the state of your churry (i.e. the chained or
-curried arguments), if you do not want this, call `freeze()` with `hold=True`.
 
 I may have wrongly used the terms _chain_ and _curry_, but that's not important
 (at least to me). What's important now is that you can **churry** a function.

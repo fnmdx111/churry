@@ -15,53 +15,25 @@ def churried(explicit=False):
 
                 self._internal = func
 
-                self._states = []
-
-                self._auto_restore = False
-
                 self._initialize()
 
-            def push_state(self):
-                self._states.append((
-                    copy(self._defaults),
-                    copy(self._keyword_args),
-                    copy(self._positional_args),
-                    copy(self._filled_args),
-                    copy(self._args),
-                    copy(self._kwargs),
-                    self._has_var_positional_arg,
-                    self._has_var_keyword_arg
-                ))
+            def push_state(self, state=None):
+                state = state or (copy(self._defaults),
+                                  copy(self._keyword_args),
+                                  copy(self._positional_args),
+                                  copy(self._filled_args),
+                                  copy(self._args),
+                                  copy(self._kwargs),
+                                  self._has_var_positional_arg,
+                                  self._has_var_keyword_arg)
 
-                return self
-
-            def freeze(self, hold=False):
-                self.push_state()
-
-                ret = _churrier()
-                cur_state = self._states.pop()
-                ret.set_state(cur_state)
-                ret._states.append(cur_state)
-                ret._auto_restore = True
-
-                self._initialize()
-                if hold:
-                    self.set_state(cur_state)
-
-                return ret
+                self._states.append(state)
 
             def pop_state(self):
-                if self._auto_restore:
-                    # FIXME remove this hack
-                    state = self._states[0]
-                else:
-                    state = self._states.pop()
+                return self._states.pop()
 
-                self.set_state(state)
-
-                return self
-
-            restore = pop_state
+            def restore(self):
+                self.set_state(self.pop_state())
 
             def set_state(self, state):
                 (self._defaults,
@@ -74,9 +46,9 @@ def churried(explicit=False):
                 (self._has_var_positional_arg,
                  self._has_var_keyword_arg) = state[-2:]
 
-                return self
-
             def _initialize(self):
+                self._states = []
+
                 self._defaults = {}
                 self._keyword_args = set()
                 self._positional_args = []
@@ -115,18 +87,32 @@ def churried(explicit=False):
                                        for k, v in self._defaults.items()
                                        if v != Parameter.empty})
 
+                self.push_state()
+
             def _evaluate(self):
                 ret = self._internal(*self._args, **self._kwargs)
 
-                self._initialize()
-
-                if self._auto_restore:
-                    if self._states:
-                        self.restore()
+                self.restore()
 
                 return ret
 
+            def _new_churrier(self):
+                self.push_state()
+                cur_state = self.pop_state()
+
+                new = _churrier()
+                new._initialize()
+
+                new.set_state(cur_state)
+                new.push_state(cur_state)
+
+                self.set_state(self.pop_state())
+
+                return new
+
             def __call__(self, *args, **kwargs):
+                self.push_state()
+
                 self._args.extend(args)
                 self._kwargs.update(kwargs)
 
@@ -134,14 +120,14 @@ def churried(explicit=False):
                     return self._evaluate()
 
                 if self._has_var_positional_arg:
-                    return self
+                    return self._new_churrier()
                 else:
                     for _ in range(len(args)):
                         if self._positional_args:
                             self._filled_args.add(self._positional_args.pop(0))
 
                 if self._has_var_keyword_arg:
-                    return self
+                    return self._new_churrier()
                 else:
                     for k, v in kwargs.items():
                         if k in self._filled_args:
@@ -156,7 +142,7 @@ def churried(explicit=False):
                 if not self._positional_args:
                     return self._evaluate()
 
-                return self
+                return self._new_churrier()
 
             def __getattr__(self, item):
                 if item not in self.sig.parameters:

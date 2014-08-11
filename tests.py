@@ -91,17 +91,19 @@ class TestChurry(TestCase):
     def test_curry(self):
         _ = self.bind_result((1, 2, 3, 4))
 
-        x = self.test_func4(1).c(3).freeze()
-        y = x.d(4).freeze(hold=True)
+        x = self.test_func4(1).c(3)
+        y = x.d(4)
 
         _(y(2))
-        _(y(2)) # 1
-        _(y(2)) # 2
+        _(y(2))
+        _(y(2))
 
         _(x.d(4).b(2))
         _(x(d=4).b(2))
         _(x(b=2, d=4))
         _(x.d(4)(2))
+
+        _(self.test_func4(1).c(3).d(4).b(2))
 
 
 if __name__ == '__main__':
