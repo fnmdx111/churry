@@ -115,6 +115,12 @@ Examples
 
 See `tests.py`.
 
+See also
+----
+
+Please check out the other branch of this project `mutable-churry`, pay
+attention to section `curriability`.
+
 License
 ----
 
