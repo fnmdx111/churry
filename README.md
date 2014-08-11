@@ -2,8 +2,14 @@
 churry
 ====
 
-Warning: this library does not comply with the Python philosophy: **TIOOTDI**.
+Warning
+----
+
+This library does not comply with the Python philosophy **TIOOTDI**.
 Leave before you faint.
+
+Introduction
+----
 
 The word churry is the combination of **chain and curry**,
 which implies that the library named as such does the same.
@@ -45,9 +51,10 @@ we can
 move.from_(1).to(5)(spam)
 ```
 
-Moreover, for functions with variable arguments (both positional or keyword),
-churry wouldn't know when to stop receiving arguments and begin to evaluate.
-You have to call the churried function with empty argument. For example,
+Note that for functions with variable arguments (both positional or keyword),
+churry wouldn't know when to stop receiving arguments.
+So you have to call the churried function with empty argument to inform churry
+that it's time to evaluate. For example,
 
 ```python
 @churried()
@@ -72,7 +79,7 @@ move_to_1_5(bar, foo)()
 move_to_1_5(spam, ham)()
 ```
 
-If you set `auto_restore` to `False`, you may need to call `_.restore()`
+If you set `auto_restore` to `False`, you may need to call `restore()`
 manually each time you evaluate a churried function.
 
 I may have wrongly used the terms _chain_ and _curry_, but that's not important
@@ -82,10 +89,10 @@ Gotchas
 ----
 
 If the function you want to decorate does not have variable positional or
-variable keyword argument, you must supply the keyword arguments
-in whatever way before the positional arguments are supplied. Because when
-positional arguments are fully supplied, churry evaluates the function using
-the default arguments.
+variable keyword argument, you must supply the keyword arguments before the
+positional arguments are supplied.
+Because when positional arguments are fully supplied, churry evaluates the
+function with the default argument values.
 
 In short, do
 
@@ -99,6 +106,8 @@ move.to(5).from_(1)(spam)
 
 ```python
 move(spam).from_(1).to(5)
+# this raises AttributeError because NoneType (return value of move(spam))
+# does not have attribute 'from_'
 ```
 
 If you do not want this feature (or whatever it is), use the `explicit` switch
@@ -107,7 +116,7 @@ so that churry only does evaluation after you call it with empty argument.
 Examples
 ----
 
-See `tests.py`
+See `tests.py`.
 
 License
 ----
