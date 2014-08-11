@@ -79,8 +79,8 @@ move_to_1_5(bar, foo)()
 move_to_1_5(spam, ham)()
 ```
 
-If you set `auto_restore` to `False`, you may need to call `restore()`
-manually each time you evaluate a churried function.
+Note that `freeze()` will clear the state of your churry (i.e. the chained or
+curried arguments), if you do not want this, call `freeze()` with `hold=True`.
 
 I may have wrongly used the terms _chain_ and _curry_, but that's not important
 (at least to me). What's important now is that you can **churry** a function.

@@ -1,10 +1,11 @@
 from inspect import signature, Parameter
+from copy import copy
 
 class WTFError(BaseException):
     pass
 
 
-def churried(explicit=False, auto_restore=True):
+def churried(explicit=False):
     def wrapper(func):
         sig = signature(func)
 
@@ -16,37 +17,64 @@ def churried(explicit=False, auto_restore=True):
 
                 self._states = []
 
+                self._auto_restore = False
+
                 self._initialize()
 
             def push_state(self):
                 self._states.append((
-                    self._defaults.copy(),
-                    self._keyword_args.copy(),
-                    self._positional_args.copy(),
-                    self._filled_args.copy(),
-                    self._args.copy(),
-                    self._kwargs.copy(),
+                    copy(self._defaults),
+                    copy(self._keyword_args),
+                    copy(self._positional_args),
+                    copy(self._filled_args),
+                    copy(self._args),
+                    copy(self._kwargs),
                     self._has_var_positional_arg,
                     self._has_var_keyword_arg
                 ))
 
                 return self
 
-            freeze = push_state
+            def freeze(self, hold=False):
+                self.push_state()
+
+                ret = _churrier()
+                cur_state = self._states.pop()
+                ret.set_state(cur_state)
+                ret._states.append(cur_state)
+                ret._auto_restore = True
+
+                self._initialize()
+                if hold:
+                    self.set_state(cur_state)
+
+                return ret
 
             def pop_state(self):
+                if self._auto_restore:
+                    # FIXME remove this hack
+                    state = self._states[0]
+                else:
+                    state = self._states.pop()
+
+                self.set_state(state)
+
+                return self
+
+            restore = pop_state
+
+            def set_state(self, state):
                 (self._defaults,
                  self._keyword_args,
                  self._positional_args,
                  self._filled_args,
                  self._args,
-                 self._kwargs,
-                 self._has_var_positional_arg,
-                 self._has_var_keyword_arg) = self._states.pop()
+                 self._kwargs) = map(lambda x: copy(x), state[:-2])
+
+                (self._has_var_positional_arg,
+                 self._has_var_keyword_arg) = state[-2:]
 
                 return self
-
-            restore = pop_state
 
             def _initialize(self):
                 self._defaults = {}
@@ -92,7 +120,7 @@ def churried(explicit=False, auto_restore=True):
 
                 self._initialize()
 
-                if auto_restore:
+                if self._auto_restore:
                     if self._states:
                         self.restore()
 

@@ -23,7 +23,7 @@ class TestChurry(TestCase):
 
         self.test_func3 = _
 
-        @churried(auto_restore=True)
+        @churried()
         def _(a, b, c='c', d='d'):
             return a, b, c, d
 
@@ -70,9 +70,7 @@ class TestChurry(TestCase):
     def test_4(self):
         _ = self.bind_result((1, 2, 3, 4))
 
-        x = self.test_func4(1).c(3).d(4).freeze()
-        _(x(2))
-        _(x(2))
+        _(self.test_func4(1).c(3).d(4)(2))
         _(self.test_func4(a=1).c(3).d(4).b(2))
         _(self.test_func4.b(2).c(3).d(4).a(1))
 
@@ -89,6 +87,21 @@ class TestChurry(TestCase):
         _(self.test_func6(1, 2).c(3).d(4)())
         _(self.test_func6.a(1).b(2).c(3).d(4)())
         _(self.test_func6(c=3, d=4)(1).b(2)())
+
+    def test_curry(self):
+        _ = self.bind_result((1, 2, 3, 4))
+
+        x = self.test_func4(1).c(3).freeze()
+        y = x.d(4).freeze(hold=True)
+
+        _(y(2))
+        _(y(2)) # 1
+        _(y(2)) # 2
+
+        _(x.d(4).b(2))
+        _(x(d=4).b(2))
+        _(x(b=2, d=4))
+        _(x.d(4)(2))
 
 
 if __name__ == '__main__':
